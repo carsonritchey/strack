@@ -10,6 +10,7 @@ const SEPERATOR: char = ',';
 fn main() {
     let mut shows: Vec<Show> = Show::file_to_vec(); 
 
+    println!("{}", ansi_term::Style::new().italic().paint("type 'help' for help!"));
     loop {
         main_menu(&shows);
     }
@@ -50,10 +51,46 @@ impl Show {
 
         v
     }
+
+    fn vec_to_file(shows: &Vec<Show>) {
+
+    }
+
+    fn new_show() -> Show {
+        Show {episode: prompt_and_parse("current episode?"), season: prompt_and_parse("current season?"), last_watched: get_date_string(), finished: false}
+    }
+
+    fn add_show(shows: &mut Vec<Show>, show: &Show) {
+        shows.push(Show::new_show());
+
+        Show::vec_to_file(shows);
+    }
+
+    fn remove_show(shows: &Vec<Show>, index: usize) {
+        Show::vec_to_file(shows);
+    }
 }
 
 fn main_menu(shows: &Vec<Show>) {
     let choice = prompt("");
+
+    if choice.starts_with(MainMenuOptions::Help.value()) {
+        println!("\n'add'      to add a show\n'reomve'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode\n'list'     to list your shows\n'exit'     to exit");
+    } else if choice.starts_with(MainMenuOptions::Add.value()) {
+
+    } else if choice.starts_with(MainMenuOptions::Remove.value()) {
+
+    } else if choice.starts_with(MainMenuOptions::Progress.value()) {
+
+    } else if choice.starts_with(MainMenuOptions::Set.value()) {
+
+    } else if choice.starts_with(MainMenuOptions::List.value()) {
+
+    } else if choice.starts_with(MainMenuOptions::Exit.value()) {
+        std::process::exit(1); 
+    } else {
+        println!("{}", ansi_term::Style::new().italic().paint("unknown command"));
+    }
 }
 
 // helper functions 
@@ -87,3 +124,10 @@ fn dat_path() -> String {
         None => panic!("unable to locate home directory"),
     }
 } 
+
+fn get_date_string() -> String {
+    let date: String = chrono::offset::Local::now().to_string();
+    let now: Vec<&str> = date.split(' ').collect();
+
+    now.get(0).expect("unable to get date").to_string()
+}
