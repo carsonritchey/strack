@@ -1,4 +1,4 @@
-use std::{path, fs};
+use std::{path, fs, io};
 
 const DAT_DIR: &str = ".strack";
 
@@ -6,11 +6,15 @@ const SHOW_DAT: &str = "show_dat.txt";
 const TO_WATCH: &str = "to_watch.txt";
 
 const SEPERATOR: char = ',';
+const WATCHLIST: &str = "to watch";
 
 fn main() {
+    // uncomment if running on win10
+    //ansi_term::enable_ansi_support();
+    
     let mut shows: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), SHOW_DAT));
-    //let mut shows_to_watch: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), TO_WATCH));
-
+    let mut shows_to_watch: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), TO_WATCH));
+    
     create_dir();
      
     println!("{}", ansi_term::Style::new().italic().paint("type 'help' for help!"));
@@ -57,9 +61,20 @@ impl MainMenu {
     }
 
     fn list(shows: &mut Vec<Show>) {
-       for show in shows {
-            println!("'{}' @ s{}, e{}", show.name, show.season, show.episode);
-       }
+        let mut longest: usize = 0;
+        for show in &mut *shows {
+            if show.name.len() > longest {
+                longest = show.name.len();
+            }
+        }
+
+        for show in shows {
+            let mut space: String = String::new();
+            for _n in 0..longest-show.name.len() {
+                space += " ";
+            }
+            println!("'{}'{} {}", show.name, space, ansi_term::Style::new().italic().paint(format!("@ (s{}, e{})", show.season, show.episode)));
+        }
     }
 }
 
@@ -94,8 +109,9 @@ impl Show {
     }
 
     // writes contents of Vec<Show> to file
-    fn vec_to_file(file: String, shows: &Vec<Show>) {
-
+    fn vec_to_file(f: String, shows: &Vec<Show>) {
+        // clears file
+        let mut file = fs::File::create("test.txt");
     }
 
     fn add_show(shows: &mut Vec<Show>, show: Show) {
