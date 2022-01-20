@@ -1,4 +1,5 @@
-use std::{path, fs, io};
+use std::{path, fs};
+use std::io::prelude::*;
 
 const DAT_DIR: &str = ".strack";
 
@@ -22,6 +23,7 @@ fn main() {
     loop {
         main_menu(&mut shows);
     }
+
 }
 
 enum MainMenu {
@@ -55,7 +57,7 @@ impl MainMenu {
             Show::add_show(shows, Show {name, episode: 1, season: 1, last_watched: get_date_string(), finished: false});
         } else {
             let season: usize = season.trim_end().parse::<usize>().unwrap(); 
-            let episode: usize = prompt_and_parse("current season?");
+            let episode: usize = prompt_and_parse("current episode?");
 
             Show::add_show(shows, Show {name, episode, season, last_watched: get_date_string(), finished: false});
         }
@@ -114,9 +116,22 @@ impl Show {
     }
 
     // writes contents of Vec<Show> to file
-    fn vec_to_file(f: String, shows: &Vec<Show>) {
+    fn vec_to_file(f_name: String, shows: &Vec<Show>) {
+        let mut to_send = String::new();
+        for show in shows {
+            let fuck = format!("{}{}{}{}{}{}{}{}{}\n", &show.name, SEPERATOR, &show.season, SEPERATOR, &show.episode, SEPERATOR, &show.last_watched, SEPERATOR, &show.finished);
+
+            to_send.push_str(&fuck);
+        }
+
+        if to_send.len() == 0 {
+            return;
+        }
+
         // clears file
-        let mut file = fs::File::create("test.txt");
+        let mut f = fs::File::create(f_name).expect("unable to open file");
+
+        f.write_all(to_send.as_bytes()).expect("unable to write to file");
     }
 
     fn add_show(shows: &mut Vec<Show>, show: Show) {
