@@ -11,11 +11,12 @@ const WATCHLIST: &str = "to watch";
 fn main() {
     // uncomment if running on win10
     //ansi_term::enable_ansi_support();
+
+    create_dir();
     
     let mut shows: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), SHOW_DAT));
     let mut shows_to_watch: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), TO_WATCH));
     
-    create_dir();
      
     println!("{}", ansi_term::Style::new().italic().paint("type 'help' for help!"));
     loop {
@@ -48,15 +49,15 @@ impl MainMenu {
     // option functions 
     fn add(shows: &mut Vec<Show>) {
         let name: String = prompt("name of show?");
-        let episode: String = prompt("current episode? (press enter to default to s1, e1)");
+        let season: String = prompt("current season? (press enter to default to s1, e1)");
 
-        if episode.len() == 0 {
-            Show::add_show(shows, Show {name: name, episode: 1, season: 1, last_watched: get_date_string(), finished: false});
+        if season.len() == 0 {
+            Show::add_show(shows, Show {name, episode: 1, season: 1, last_watched: get_date_string(), finished: false});
         } else {
-            let episode: usize = episode.trim_end().parse::<usize>().unwrap(); 
-            let season: usize = prompt_and_parse("current season?");
+            let season: usize = season.trim_end().parse::<usize>().unwrap(); 
+            let episode: usize = prompt_and_parse("current season?");
 
-            Show::add_show(shows, Show {name: name, episode: episode, season: season, last_watched: get_date_string(), finished: false});
+            Show::add_show(shows, Show {name, episode, season, last_watched: get_date_string(), finished: false});
         }
     }
 
@@ -66,6 +67,10 @@ impl MainMenu {
             if show.name.len() > longest {
                 longest = show.name.len();
             }
+        }
+
+        if longest == 0 {
+            println!("no shows found to list...\nyou can add some with the 'add' command");
         }
 
         for show in shows {
@@ -125,7 +130,7 @@ fn main_menu(shows: &mut Vec<Show>) {
     let choice = prompt("");
 
     if choice.starts_with(MainMenu::Help.value()) {
-        println!("\n'add'      to add a show\n'reomve'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode\n'list'     to list your shows\n'exit'     to exit");
+        println!("\n'add'      to add a show\n'remove'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode\n'list'     to list your shows\n'exit'     to exit");
     } else if choice.starts_with(MainMenu::Add.value()) {
         MainMenu::add(shows);
     } else if choice.starts_with(MainMenu::Remove.value()) {
