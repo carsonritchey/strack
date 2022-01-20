@@ -50,7 +50,17 @@ impl MainMenu {
 
     // option functions 
     fn add(shows: &mut Vec<Show>) {
-        let name: String = prompt("name of show?");
+        let name: String = prompt("name of show?").replace(SEPERATOR, "");
+
+        for show in &mut *shows {
+            if &show.name.to_lowercase() == &name.to_lowercase() {
+                println!("'{}' already exists. add anways? (y/n)", &name);
+
+                if prompt("").starts_with("n") { return }
+                else { break }
+            }
+        }
+
         let season: String = prompt("current season? (press enter to default to s1, e1)");
 
         if season.len() == 0 {
@@ -137,7 +147,7 @@ impl Show {
     }
 
     fn add_show(shows: &mut Vec<Show>, show: Show) {
-        println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ s{}, e{}", &show.name, &show.season, &show.episode)));
+        println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ (s{}, e{})", &show.name, &show.season, &show.episode)));
         shows.push(show);
         Show::vec_to_file(format!("{}/{}", dat_path(), SHOW_DAT), shows);
     }
