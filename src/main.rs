@@ -38,13 +38,13 @@ enum MainMenu {
 impl MainMenu {
     fn value(&self) -> &str {
         match *self {
-            MainMenu::Help => "help",
-            MainMenu::Add => "add",
-            MainMenu::Remove => "remove",
+            MainMenu::Help     => "help",
+            MainMenu::Add      => "add",
+            MainMenu::Remove   => "remove",
             MainMenu::Progress => "progress",
-            MainMenu::Set => "set",
-            MainMenu::List => "list",
-            MainMenu::Exit => "exit",
+            MainMenu::Set      => "set",
+            MainMenu::List     => "list",
+            MainMenu::Exit     => "exit",
         }
     }
 
@@ -61,6 +61,10 @@ impl MainMenu {
 
             Show::add_show(shows, Show {name, episode, season, last_watched: get_date_string(), finished: false});
         }
+    }
+
+    fn set(shows: &mut Vec<Show>) {
+        
     }
 
     fn list(shows: &mut Vec<Show>) {
@@ -103,11 +107,11 @@ impl Show {
             let mut show = Show{name: String::new(), episode: 0, season: 0, last_watched: String::new(), finished: true}; 
             let split: Vec<&str> = line.split(SEPERATOR).collect();
 
-            show.name = split[0].to_string();
-            show.season = split[1].parse::<usize>().expect("unable to read show_dat.txt");
-            show.episode = split[2].parse::<usize>().expect("unable to read show_dat.txt");
+            show.name         = split[0].to_string();
+            show.season       = split[1].parse::<usize>().expect("unable to read show_dat.txt");
+            show.episode      = split[2].parse::<usize>().expect("unable to read show_dat.txt");
             show.last_watched = split[3].to_string();
-            show.finished = parse_bool(split[4]);
+            show.finished     = parse_bool(split[4]);
 
             v.push(show);
         }
@@ -124,9 +128,7 @@ impl Show {
             to_send.push_str(&fuck);
         }
 
-        if to_send.len() == 0 {
-            return;
-        }
+        if to_send.len() == 0 { return }
 
         // clears file
         let mut f = fs::File::create(f_name).expect("unable to open file");
@@ -153,7 +155,7 @@ fn main_menu(shows: &mut Vec<Show>) {
     } else if choice.starts_with(MainMenu::Progress.value()) {
 
     } else if choice.starts_with(MainMenu::Set.value()) {
-
+        MainMenu::set(shows);
     } else if choice.starts_with(MainMenu::List.value()) {
         MainMenu::list(shows); 
     } else if choice.starts_with(MainMenu::Exit.value()) {
