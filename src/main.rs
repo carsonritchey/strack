@@ -1,24 +1,18 @@
-use std::{path, fs};
+use std::{path, fs, io};
 use std::io::prelude::*;
 
 const DAT_DIR: &str = ".strack";
 
 const SHOW_DAT: &str = "show_dat.txt";
-const TO_WATCH: &str = "to_watch.txt";
 
 const SEPERATOR: char = ',';
 const WATCHLIST: &str = "to watch";
 
 fn main() {
-    // uncomment if running on win10
-    //ansi_term::enable_ansi_support();
-
     create_dir();
+
+    let mut shows: Vec<Show> = Show::file_to_vec();
     
-    let mut shows: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), SHOW_DAT));
-    let mut shows_to_watch: Vec<Show> = Show::file_to_vec(format!("{}/{}", dat_path(), TO_WATCH));
-    
-     
     println!("{}", ansi_term::Style::new().italic().paint("type 'help' for help!"));
     loop {
         main_menu(&mut shows);
@@ -58,7 +52,7 @@ impl MainMenu {
 
                 if prompt("").starts_with("n") { return }
                 else { break }
-            }
+            } else if name.len() == 0 { return }
         }
 
         let season: String = prompt("current season? (press enter to default to s1, e1)");
@@ -108,10 +102,10 @@ struct Show {
 }
 impl Show {
     // reads file and puts its contents into Vec<Show>
-    fn file_to_vec(file: String) -> Vec<Show> {
+    fn file_to_vec() -> Vec<Show> {
         let mut v: Vec<Show> = Vec::new();
 
-        let dat = fs::read_to_string(file).expect("unable to read show_dat.txt");
+        let dat = fs::read_to_string(format!("{}/{}", dat_path(), SHOW_DAT)).expect("unable to read show_dat.txt");
 
         for line in dat.lines() {
             let mut show = Show{name: String::new(), episode: 0, season: 0, last_watched: String::new(), finished: true}; 
@@ -130,7 +124,7 @@ impl Show {
     }
 
     // writes contents of Vec<Show> to file
-    fn vec_to_file(f_name: String, shows: &Vec<Show>) {
+    fn vec_to_file(shows: &Vec<Show>) {
         let mut to_send = String::new();
         for show in shows {
             let fuck = format!("{}{}{}{}{}{}{}{}{}\n", &show.name, SEPERATOR, &show.season, SEPERATOR, &show.episode, SEPERATOR, &show.last_watched, SEPERATOR, &show.finished);
@@ -141,7 +135,7 @@ impl Show {
         if to_send.len() == 0 { return }
 
         // clears file
-        let mut f = fs::File::create(f_name).expect("unable to open file");
+        let mut f = fs::File::create(format!("{}/{}", dat_path(), SHOW_DAT)).expect("unable to open file");
 
         f.write_all(to_send.as_bytes()).expect("unable to write to file");
     }
@@ -149,15 +143,17 @@ impl Show {
     fn add_show(shows: &mut Vec<Show>, show: Show) {
         println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ (s{}, e{})", &show.name, &show.season, &show.episode)));
         shows.push(show);
-        Show::vec_to_file(format!("{}/{}", dat_path(), SHOW_DAT), shows);
+        Show::vec_to_file(shows);
     }
 }
 
 fn main_menu(shows: &mut Vec<Show>) {
-    let choice = prompt("");
+    print!("> ");
+    io::stdout().flush().expect("unable to format menu input");
 
+    let choice = prompt("");
     if choice.starts_with(MainMenu::Help.value()) {
-        println!("\n'add'      to add a show\n'remove'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode\n'list'     to list your shows\n'exit'     to exit");
+        println!("'add'      to add a show\n'remove'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode\n'list'     to list your shows\n'exit'     to exit");
     } else if choice.starts_with(MainMenu::Add.value()) {
         MainMenu::add(shows);
     } else if choice.starts_with(MainMenu::Remove.value()) {
@@ -166,7 +162,7 @@ fn main_menu(shows: &mut Vec<Show>) {
 
     } else if choice.starts_with(MainMenu::Set.value()) {
         MainMenu::set(shows);
-    } else if choice.starts_with(MainMenu::List.value()) {
+    } else if choice.starts_with(MainMenu::List.value()) || choice == "ls" {
         MainMenu::list(shows); 
     } else if choice.starts_with(MainMenu::Exit.value()) {
         std::process::exit(1); 
@@ -229,7 +225,6 @@ fn create_dir() {
         fs::create_dir_all(&path).expect("unable to create strack dir");
 
         fs::File::create(format!("{}/{}", &path, SHOW_DAT)).expect("unable to create show_dat file");
-        fs::File::create(format!("{}/{}", &path, TO_WATCH)).expect("unable to create to_watch file");
     }
 }
 
