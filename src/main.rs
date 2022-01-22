@@ -54,10 +54,13 @@ impl MainMenu {
             } else if name.len() == 0 { return }
         }
 
-        let season: String = prompt("current season? (press enter to default to s1, e1)");
+        let season: String = prompt("current season?\npress enter to default to s1, e1 or 'w' to add to watch later list");
+
 
         if season.len() == 0 {
             Show::add_show(shows, Show {name, episode: 1, season: 1, last_watched: get_date_string(), finished: false});
+        } else if season.starts_with("w") {
+            Show::add_show(shows, Show {name, episode: 1, season: 1, last_watched: WATCHLIST.to_string(), finished: false});
         } else {
             let season: usize = season.trim_end().parse::<usize>().unwrap(); 
             let episode: usize = prompt_and_parse("current episode?");
@@ -73,6 +76,11 @@ impl MainMenu {
 
         let index = prompt_and_parse("please select an index to remove ('0' to cancel)");
         if index == 0 { return; }
+        else if index - 1 > shows.len() {
+            println!("index out of range...");
+            MainMenu::remove(shows); 
+            return; 
+        }
 
         println!("removed '{}'!", shows[index - 1].name);
         shows.remove(index - 1);
@@ -80,7 +88,17 @@ impl MainMenu {
     }
 
     fn set(shows: &mut Vec<Show>) {
-        
+        for (i, show) in shows.iter().enumerate() {
+            println!("{}: '{}'", i + 1, show.name);
+        }
+
+        let index = prompt_and_parse("please select an index to edit ('0' to cancel)");
+        if index == 0 { return; }
+        else if index - 1 > shows.len() {
+            println!("index out of range...");
+            MainMenu::set(shows); 
+            return; 
+        }
     }
 
     fn list(shows: &mut Vec<Show>) {
@@ -179,7 +197,11 @@ impl Show {
     }
 
     fn add_show(shows: &mut Vec<Show>, show: Show) {
-        println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ (s{}, e{})", &show.name, &show.season, &show.episode)));
+        if show.last_watched == WATCHLIST {
+            println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ watchlist", &show.name)));
+        } else {
+            println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ (s{}, e{})", &show.name, &show.season, &show.episode)));
+        }
         shows.push(show);
         Show::vec_to_file(shows);
     }
