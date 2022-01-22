@@ -17,7 +17,6 @@ fn main() {
     loop {
         main_menu(&mut shows);
     }
-
 }
 
 enum MainMenu {
@@ -67,29 +66,56 @@ impl MainMenu {
         }
     }
 
+    fn remove(shows: &mut Vec<Show>) {
+
+    }
+
     fn set(shows: &mut Vec<Show>) {
         
     }
 
     fn list(shows: &mut Vec<Show>) {
+        if shows.len() == 0 {
+            println!("no shows found to list...\nyou can add some with the 'add' command");
+        }
+
+        let mut inprogress: Vec<&Show> = Vec::new(); 
+        let mut finished: Vec<&Show> = Vec::new(); 
+        let mut towatch: Vec<&Show> = Vec::new(); 
+
         let mut longest: usize = 0;
         for show in &mut *shows {
+            if show.finished { finished.push(&*show); }
+            else if show.last_watched == WATCHLIST { towatch.push(&*show); }
+            else { inprogress.push(&*show); }
+
             if show.name.len() > longest {
                 longest = show.name.len();
             }
         }
 
-        if longest == 0 {
-            println!("no shows found to list...\nyou can add some with the 'add' command");
+        println!("{}", ansi_term::Style::new().bold().paint("finished shows:"));
+        for show in finished {
+            println!("'{}'\tfinished on {}", show.name, show.last_watched);
+        }
+        
+        println!("\n{}", ansi_term::Style::new().bold().paint("watch list:"));
+        for show in towatch {
+            println!("'{}'", show.name);
         }
 
-        for show in shows {
+        println!("\n{}", ansi_term::Style::new().bold().paint("in progress:"));
+        for show in inprogress {
+            println!("'{}'\tlast watched on {}", show.name, show.last_watched);
+        }
+
+        /*for show in shows {
             let mut space: String = String::new();
             for _n in 0..longest-show.name.len() {
                 space += " ";
             }
             println!("'{}'{} {}", show.name, space, ansi_term::Style::new().italic().paint(format!("@ (s{}, e{})", show.season, show.episode)));
-        }
+        }*/
     }
 }
 
@@ -153,11 +179,11 @@ fn main_menu(shows: &mut Vec<Show>) {
 
     let choice = prompt("");
     if choice.starts_with(MainMenu::Help.value()) {
-        println!("'add'      to add a show\n'remove'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode\n'list'     to list your shows\n'exit'     to exit");
+        println!("'add'      to add a show\n'remove'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode or watch later\n'list'     to list your shows\n'exit'     to exit");
     } else if choice.starts_with(MainMenu::Add.value()) {
         MainMenu::add(shows);
     } else if choice.starts_with(MainMenu::Remove.value()) {
-
+        MainMenu::remove(shows);
     } else if choice.starts_with(MainMenu::Progress.value()) {
 
     } else if choice.starts_with(MainMenu::Set.value()) {
