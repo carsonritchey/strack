@@ -67,7 +67,16 @@ impl MainMenu {
     }
 
     fn remove(shows: &mut Vec<Show>) {
+        for (i, show) in shows.iter().enumerate() {
+            println!("{}: '{}'", i + 1, show.name);
+        }
 
+        let index = prompt_and_parse("please select an index to remove ('0' to cancel)");
+        if index == 0 { return; }
+
+        println!("removed '{}'!", shows[index - 1].name);
+        shows.remove(index - 1);
+        Show::vec_to_file(shows); 
     }
 
     fn set(shows: &mut Vec<Show>) {
@@ -182,8 +191,6 @@ impl Show {
 }
 
 fn main_menu(shows: &mut Vec<Show>) {
-    print!("> ");
-    io::stdout().flush().expect("unable to format menu input");
 
     let choice = prompt("");
     if choice.starts_with(MainMenu::Help.value()) {
@@ -214,6 +221,8 @@ fn prompt(prompt: &str) -> String {
     if prompt.len() != 0 {
         println!("{}", prompt);
     }
+    print!("> ");
+    io::stdout().flush().expect("unable to format menu input");
     std::io::stdin().read_line(&mut s).unwrap();
 
     s.trim_end().to_string()
@@ -224,6 +233,8 @@ fn prompt_and_parse(prompt: &str) -> usize {
     return loop {
         let mut s = String::new();
         println!("{}", prompt);
+        print!("> ");
+        io::stdout().flush().expect("unable to format menu input");
         std::io::stdin().read_line(&mut s).unwrap();
 
         let test = &s.trim_end().parse::<usize>();
@@ -262,6 +273,7 @@ fn create_dir() {
     }
 }
 
+// converts string to bool
 fn parse_bool(s: &str) -> bool {
     if s == "true" {
         return true;
