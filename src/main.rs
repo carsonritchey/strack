@@ -83,20 +83,27 @@ impl MainMenu {
         let mut finished: Vec<&Show> = Vec::new(); 
         let mut towatch: Vec<&Show> = Vec::new(); 
 
-        let mut longest: usize = 0;
+        let mut finished_length: usize = 0;
+        let mut inprogress_length: usize = 0;
         for show in &mut *shows {
-            if show.finished { finished.push(&*show); }
+            if show.finished { 
+                if show.name.len() > finished_length { finished_length = show.name.len(); }
+                finished.push(&*show); 
+            }
             else if show.last_watched == WATCHLIST { towatch.push(&*show); }
-            else { inprogress.push(&*show); }
-
-            if show.name.len() > longest {
-                longest = show.name.len();
+            else {
+                if show.name.len() > inprogress_length { inprogress_length = show.name.len(); }
+                inprogress.push(&*show);
             }
         }
 
         println!("{}", ansi_term::Style::new().bold().paint("finished shows:"));
         for show in finished {
-            println!("'{}'\tfinished on {}", show.name, show.last_watched);
+            let mut space: String = String::new();
+            for _n in 0..finished_length-show.name.len() {
+                space += " ";
+            }
+            println!("{} '{}'{} {}", Show::position(show), show.name, space, show.last_watched);
         }
         
         println!("\n{}", ansi_term::Style::new().bold().paint("watch list:"));
@@ -106,16 +113,12 @@ impl MainMenu {
 
         println!("\n{}", ansi_term::Style::new().bold().paint("in progress:"));
         for show in inprogress {
-            println!("'{}'\tlast watched on {}", show.name, show.last_watched);
-        }
-
-        /*for show in shows {
             let mut space: String = String::new();
-            for _n in 0..longest-show.name.len() {
+            for _n in 0..inprogress_length-show.name.len() {
                 space += " ";
             }
-            println!("'{}'{} {}", show.name, space, ansi_term::Style::new().italic().paint(format!("@ (s{}, e{})", show.season, show.episode)));
-        }*/
+            println!("{} '{}'{} {}", Show::position(show), show.name, space, show.last_watched);
+        }
     }
 }
 
@@ -170,6 +173,11 @@ impl Show {
         println!("{}", ansi_term::Style::new().italic().paint(format!("added '{}' @ (s{}, e{})", &show.name, &show.season, &show.episode)));
         shows.push(show);
         Show::vec_to_file(shows);
+    }
+
+    // returns current season and episode i.e. (s02, e01)
+    fn position(show: &Show) -> String {
+        format!("(s{:0w$},e{:0w$})", show.season, show.episode, w = 2)
     }
 }
 
