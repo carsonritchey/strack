@@ -23,7 +23,6 @@ enum MainMenu {
     Help,
     Add,
     Remove,
-    Progress,
     Set,
     List,
     Exit,
@@ -34,7 +33,6 @@ impl MainMenu {
             MainMenu::Help     => "help",
             MainMenu::Add      => "add",
             MainMenu::Remove   => "remove",
-            MainMenu::Progress => "progress",
             MainMenu::Set      => "set",
             MainMenu::List     => "list",
             MainMenu::Exit     => "exit",
@@ -74,7 +72,7 @@ impl MainMenu {
             println!("{}: '{}'", i + 1, show.name);
         }
 
-        let index = prompt_and_parse("please select an index to remove ('0' to cancel)");
+        let index = prompt_and_parse_zero_cancel("please select an index to remove (enter to skip)");
         if index == 0 { return; }
         else if index - 1 > shows.len() {
             println!("index out of range...");
@@ -92,13 +90,40 @@ impl MainMenu {
             println!("{}: '{}'", i + 1, show.name);
         }
 
-        let index = prompt_and_parse("please select an index to edit ('0' to cancel)");
+        let mut index = prompt_and_parse_zero_cancel("please select an index to edit (enter to cancel)");
         if index == 0 { return; }
         else if index - 1 > shows.len() {
             println!("index out of range...");
             MainMenu::set(shows); 
             return; 
         }
+
+        index -= 1;
+
+        let choice = prompt("'w' to toggle watchlist (enter to skip)");
+        if choice == "w" {
+            if shows[index].last_watched == WATCHLIST {
+                println!("'{}' is no longer in watchlist", shows[index].name);
+                shows[index].last_watched = get_date_string();
+            } else {
+                shows[index].last_watched = WATCHLIST.to_string(); 
+                println!("'{}' is now in watchlist", shows[index].name);
+                Show::vec_to_file(shows); 
+                return;
+            }
+        }
+
+        let season = prompt_and_parse_zero_cancel("current season? (enter to skip)");
+        let episode = prompt_and_parse_zero_cancel("current season? (enter to skip)");
+
+        if season != 0 {
+            shows[index].season = season;
+        }
+        if episode != 0 {
+            shows[index].episode = episode;
+        }
+
+        println!("'{}' is now set to {}!", shows[index].name, shows[index].position());
     }
 
     fn list(shows: &mut Vec<Show>) {
@@ -124,27 +149,33 @@ impl MainMenu {
             }
         }
 
-        println!("{}", ansi_term::Style::new().bold().paint("finished shows:"));
+        if finished.len() != 0 {
+            println!("{}", ansi_term::Style::new().bold().paint("finished shows:"));
+        }
         for show in finished {
             let mut space: String = String::new();
             for _n in 0..finished_length-show.name.len() {
                 space += " ";
             }
-            println!("{} '{}'{} {}", Show::position(show), show.name, space, show.last_watched);
+            println!("'{}'{} {}", show.name, space, show.last_watched);
         }
         
-        println!("\n{}", ansi_term::Style::new().bold().paint("watch list:"));
+        if towatch.len() != 0 {
+            println!("\n{}", ansi_term::Style::new().bold().paint("watch list:"));
+        }
         for show in towatch {
             println!("'{}'", show.name);
         }
 
-        println!("\n{}", ansi_term::Style::new().bold().paint("in progress:"));
+        if inprogress.len() != 0 {
+            println!("\n{}", ansi_term::Style::new().bold().paint("in progress:"));
+        }
         for show in inprogress {
             let mut space: String = String::new();
             for _n in 0..inprogress_length-show.name.len() {
                 space += " ";
             }
-            println!("{} '{}'{} {}", Show::position(show), show.name, space, show.last_watched);
+            println!("{} '{}'{} {}", show.position(), show.name, space, show.last_watched);
         }
     }
 }
@@ -207,8 +238,8 @@ impl Show {
     }
 
     // returns current season and episode i.e. (s02, e01)
-    fn position(show: &Show) -> String {
-        format!("(s{:0w$},e{:0w$})", show.season, show.episode, w = 2)
+    fn position(&self) -> String {
+        format!("(s{:0w$},e{:0w$})", self.season, self.episode, w = 2)
     }
 }
 
@@ -216,13 +247,11 @@ fn main_menu(shows: &mut Vec<Show>) {
 
     let choice = prompt("");
     if choice.starts_with(MainMenu::Help.value()) {
-        println!("'add'      to add a show\n'remove'   to remove a show\n'progress' to progress in a show\n'set'      to set a show to a specific episode or watch later\n'list'     to list your shows\n'exit'     to exit");
+        println!("'add'      to add a show\n'remove'   to remove a show\n'set'      to set a show to a specific episode or watch later\n'list'     to list your shows\n'exit'     to exit");
     } else if choice.starts_with(MainMenu::Add.value()) {
         MainMenu::add(shows);
     } else if choice.starts_with(MainMenu::Remove.value()) {
         MainMenu::remove(shows);
-    } else if choice.starts_with(MainMenu::Progress.value()) {
-
     } else if choice.starts_with(MainMenu::Set.value()) {
         MainMenu::set(shows);
     } else if choice.starts_with(MainMenu::List.value()) || choice == "ls" {
@@ -258,6 +287,25 @@ fn prompt_and_parse(prompt: &str) -> usize {
         print!("> ");
         io::stdout().flush().expect("unable to format menu input");
         std::io::stdin().read_line(&mut s).unwrap();
+
+        let test = &s.trim_end().parse::<usize>();
+        match test {
+            Ok(ok) => break *ok,
+            _ => continue,
+        }
+    }
+}
+
+// prompts and converts to usize and returns 0 when nothing is typed
+fn prompt_and_parse_zero_cancel(prompt: &str) -> usize {
+    return loop {
+        let mut s = String::new();
+        println!("{}", prompt);
+        print!("> ");
+        io::stdout().flush().expect("unable to format menu input");
+        std::io::stdin().read_line(&mut s).unwrap();
+
+        if s.len() == 0 { return 0; }
 
         let test = &s.trim_end().parse::<usize>();
         match test {
